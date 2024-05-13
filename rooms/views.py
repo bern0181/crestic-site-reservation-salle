@@ -13,6 +13,7 @@ from icalendar import Calendar, Event  # Importe les classes pour créer des fic
 from datetime import datetime, time  # Importe les classes pour manipuler les dates et heures
 import os  # Importe le module os pour les opérations sur le système d'exploitation
 
+
 def add_to_ics():
     objets = BookedRoom.objects.all()
     # print('affichage des reservations (brut) :')
@@ -57,7 +58,6 @@ def add_to_ics():
     # Écrire les données dans le fichier
     with open(ics_file_path, 'wb') as f:
         f.write(ical_data)
-
 
 
 class HomePageView(LoginRequiredMixin, CreateView):
