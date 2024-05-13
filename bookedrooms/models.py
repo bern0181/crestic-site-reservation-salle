@@ -6,7 +6,6 @@ from django.urls import reverse
 from datetime import date, datetime, time
 
 
-
 class BookedRoom(models.Model):
     STATUS_CHOICES = [  # Choix pour le statut de la réservation
         ('pending', 'En attente'),
@@ -20,16 +19,17 @@ class BookedRoom(models.Model):
         ('Liciis', 'Liciis'),
     ]
 
-    date = models.DateField() # Date de la réservation
-    startTime = models.TimeField() # Heure de début de la réservation
-    endTime = models.TimeField() # Heure de fin de la réservation
-    groups = models.CharField(max_length=100, choices=LABORATORY_CHOICES) # Groupe de laboratoire
-    status = models.CharField(max_length=100, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0]) # Statut de la réservation
-    motif = models.CharField(max_length=100) # Motif de la réservation
-    peopleAmount = models.IntegerField(default=1) # Nombre de personnes
-    user = models.ForeignKey( # Utilisateur associé à la réservation
-        get_user_model(), # Utilisation de la fonction get_user_model pour obtenir le modèle utilisateur personnalisé
-        on_delete=models.CASCADE, # Suppression en cascade de l'utilisateur si celui-ci est supprimé
+    date = models.DateField()  # Date de la réservation
+    startTime = models.TimeField()  # Heure de début de la réservation
+    endTime = models.TimeField()  # Heure de fin de la réservation
+    groups = models.CharField(max_length=100, choices=LABORATORY_CHOICES)  # Groupe de laboratoire
+    status = models.CharField(max_length=100, choices=STATUS_CHOICES,
+                              default=STATUS_CHOICES[0][0])  # Statut de la réservation
+    motif = models.CharField(max_length=100)  # Motif de la réservation
+    peopleAmount = models.IntegerField(default=1)  # Nombre de personnes
+    user = models.ForeignKey(  # Utilisateur associé à la réservation
+        get_user_model(),  # Utilisation de la fonction get_user_model pour obtenir le modèle utilisateur personnalisé
+        on_delete=models.CASCADE,  # Suppression en cascade de l'utilisateur si celui-ci est supprimé
 
     )
     room_category = models.ForeignKey(  # Catégorie de salle réservée
@@ -69,6 +69,13 @@ class BookedRoom(models.Model):
             if end_time <= start_time:
                 raise ValidationError('L\'heure de fin doit être supérieure à l\'heure de début.')
 
+        # Ajout de la condition pour le samedi après 12h30 et le dimanche
+        if selected_date.weekday() == 5:  # Samedi (0 = lundi, 6 = dimanche)
+            if start_time >= time(12, 30):
+                raise ValidationError('Aucune réservation possible le samedi après 12h30.')
+        elif selected_date.weekday() == 6:  # Dimanche
+            raise ValidationError('Aucune réservation possible le dimanche.')
+
     def get_absolute_url(self):
         # Renvoie l'URL absolue de l'objet BookedRoom, utilisée pour les redirections après une création ou une
         # modification
@@ -78,4 +85,3 @@ class BookedRoom(models.Model):
         # Renvoie une représentation en chaîne de caractères de l'objet BookedRoom, utilisée notamment dans
         # l'interface d'administration Django
         return self.room_category.libRoom + " |  " + self.user.username
-
