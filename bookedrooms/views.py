@@ -1,4 +1,6 @@
 from bootstrap_datepicker_plus import DatePickerInput, TimePickerInput
+from django.core.mail import send_mail
+
 import bookedrooms.models  # Import du modèle bookedrooms pour accéder aux choix de statut
 from django.contrib.auth.mixins import (
     LoginRequiredMixin,  # Import du mixin LoginRequiredMixin pour obliger l'authentification de l'utilisateur
@@ -17,6 +19,21 @@ from .models import BookedRoom  # Import du modèle BookedRoom pour les réserva
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
+
+def send_reservation_confirmation_email(booked_room):
+    subject = 'Nouvelle réservation en attente de validation'
+    message = f'Une nouvelle réservation a été faite par {booked_room.user.first_name} {booked_room.user.last_name}.\n' \
+              f'Salle: {booked_room.room_category}\n' \
+              f'Nombre de personnes: {booked_room.peopleAmount}\n' \
+              f'Date: {booked_room.date}\n' \
+              f'Heure de début: {booked_room.startTime}\n' \
+              f'Heure de fin: {booked_room.endTime}\n' \
+              f'Groupe/Laboratoire: {booked_room.groups}\n' \
+              f'Motif: {booked_room.motif}\n' \
+              f'Veuillez valider ou refuser cette demande de réservation.'
+    sender = 'leo.bernard@etudiant.univ-reims.fr'
+    recipient_list = ['leo.bernard@etudiant.univ-reims.fr']
+    send_mail(subject, message, sender, recipient_list)
 
 class BookedRoomsListView(LoginRequiredMixin, ListView):
     model = BookedRoom  # Utilisation du modèle BookedRoom pour cette vue
@@ -158,17 +175,14 @@ class BookedRoomsCreateView(LoginRequiredMixin, CreateView):
         return form
 
     def form_valid(self, form):
-        """
-        Remplacement pour toujours définir l'utilisateur sur l'utilisateur actuellement connecté
-        """
         user = self.request.user
         form.instance.user = user
+        form.instance.status = BookedRoom.STATUS_CHOICES[0][0]
 
-        print("Form data:", form.cleaned_data)
-        print("Form errors:", form.errors)
-        data = super(BookedRoomsCreateView, self).form_valid(form)
+        response = super(BookedRoomsCreateView, self).form_valid(form)
+        send_reservation_confirmation_email(form.instance)
         add_to_ics()
-        return data
+        return response
 
 
 class BookedRoomsValidationView(LoginRequiredMixin, UserPassesTestMixin, ListView):
