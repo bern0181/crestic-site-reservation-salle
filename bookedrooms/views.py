@@ -15,25 +15,11 @@ from django.views.generic.edit import UpdateView, DeleteView, \
     CreateView  # Import des vues génériques UpdateView, DeleteView et CreateView
 from rooms.models import RoomCategory  # Import du modèle RoomCategory pour les catégories de salles
 from rooms.views import add_to_ics
+from utils import send_reservation_confirmation_email, send_reservation_cancellation_email, \
+    send_reservation_update_email
 from .models import BookedRoom  # Import du modèle BookedRoom pour les réservations de salles
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-
-
-def send_reservation_confirmation_email(booked_room):
-    subject = 'Nouvelle réservation en attente de validation'
-    message = f'Une nouvelle réservation a été faite par {booked_room.user.first_name} {booked_room.user.last_name}.\n' \
-              f'Salle: {booked_room.room_category}\n' \
-              f'Nombre de personnes: {booked_room.peopleAmount}\n' \
-              f'Date: {booked_room.date}\n' \
-              f'Heure de début: {booked_room.startTime}\n' \
-              f'Heure de fin: {booked_room.endTime}\n' \
-              f'Groupe/Laboratoire: {booked_room.groups}\n' \
-              f'Motif: {booked_room.motif}\n' \
-              f'Veuillez valider ou refuser cette demande de réservation.'
-    sender = 'leo.bernard@etudiant.univ-reims.fr'
-    recipient_list = ['leo.bernard@etudiant.univ-reims.fr']
-    send_mail(subject, message, sender, recipient_list)
 
 class BookedRoomsListView(LoginRequiredMixin, ListView):
     model = BookedRoom  # Utilisation du modèle BookedRoom pour cette vue
@@ -95,6 +81,7 @@ class BookedRoomsUpdateView(LoginRequiredMixin, UpdateView):
         user = self.request.user
         form.instance.user = user
         data = super(BookedRoomsUpdateView, self).form_valid(form)
+        send_reservation_update_email(form.instance)
         add_to_ics()
         return data
 
@@ -106,7 +93,8 @@ class BookedRoomsDeleteView(LoginRequiredMixin, DeleteView):
     login_url = 'login'  # URL vers laquelle rediriger les utilisateurs non authentifiés
 
     def delete(self, request, *args, **kwargs):
-        # Appel de la méthode delete de la super classe
+        self.object = self.get_object()
+        send_reservation_cancellation_email(self.object)
         response = super().delete(request, *args, **kwargs)
 
         # Appel de la fonction add_to_ics pour ajouter l'événement à l'ICS

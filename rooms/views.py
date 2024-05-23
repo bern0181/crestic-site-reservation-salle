@@ -1,7 +1,9 @@
 from django.http import HttpResponse  # Importe la classe HttpResponse pour gérer les réponses HTTP
 from django.views.generic import ListView  # Importe la classe ListView pour afficher une liste d'objets
 from django.urls import reverse_lazy  # Importe la fonction reverse_lazy pour les URL asynchrones
+
 from hotel_reservation_project import settings  # Importe les paramètres du projet
+from utils import send_reservation_confirmation_email
 from .models import RoomCategory  # Importe le modèle RoomCategory
 from bookedrooms.models import BookedRoom  # Importe le modèle BookedRoom
 from bootstrap_datepicker_plus import DatePickerInput, \
@@ -124,6 +126,7 @@ class HomePageView(LoginRequiredMixin, CreateView):
         print("Test:", form.cleaned_data['room_category'])
         print("Form errors:", form.errors)
         data = super(HomePageView, self).form_valid(form)
+        send_reservation_confirmation_email(form.instance)
         add_to_ics()
         return data
 
