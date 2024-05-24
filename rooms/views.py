@@ -3,7 +3,7 @@ from django.views.generic import ListView  # Importe la classe ListView pour aff
 from django.urls import reverse_lazy  # Importe la fonction reverse_lazy pour les URL asynchrones
 
 from hotel_reservation_project import settings  # Importe les paramètres du projet
-from utils import send_reservation_confirmation_email
+from utils import send_reservation_confirmation_email_admin
 from .models import RoomCategory  # Importe le modèle RoomCategory
 from bookedrooms.models import BookedRoom  # Importe le modèle BookedRoom
 from bootstrap_datepicker_plus import DatePickerInput, \
@@ -126,7 +126,7 @@ class HomePageView(LoginRequiredMixin, CreateView):
         print("Test:", form.cleaned_data['room_category'])
         print("Form errors:", form.errors)
         data = super(HomePageView, self).form_valid(form)
-        send_reservation_confirmation_email(form.instance)
+        #send_reservation_confirmation_email_admin(form.instance)
         add_to_ics()
         return data
 

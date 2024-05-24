@@ -15,8 +15,7 @@ from django.views.generic.edit import UpdateView, DeleteView, \
     CreateView  # Import des vues génériques UpdateView, DeleteView et CreateView
 from rooms.models import RoomCategory  # Import du modèle RoomCategory pour les catégories de salles
 from rooms.views import add_to_ics
-from utils import send_reservation_confirmation_email, send_reservation_cancellation_email, \
-    send_reservation_update_email
+from utils import send_reservation_confirmation_email_admin
 from .models import BookedRoom  # Import du modèle BookedRoom pour les réservations de salles
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -81,7 +80,7 @@ class BookedRoomsUpdateView(LoginRequiredMixin, UpdateView):
         user = self.request.user
         form.instance.user = user
         data = super(BookedRoomsUpdateView, self).form_valid(form)
-        send_reservation_update_email(form.instance)
+        #send_reservation_confirmation_email_admin(form.instance)
         add_to_ics()
         return data
 
@@ -94,7 +93,7 @@ class BookedRoomsDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        send_reservation_cancellation_email(self.object)
+        #send_reservation_confirmation_email_admin(self.object)
         response = super().delete(request, *args, **kwargs)
 
         # Appel de la fonction add_to_ics pour ajouter l'événement à l'ICS
@@ -168,7 +167,7 @@ class BookedRoomsCreateView(LoginRequiredMixin, CreateView):
         form.instance.status = BookedRoom.STATUS_CHOICES[0][0]
 
         response = super(BookedRoomsCreateView, self).form_valid(form)
-        send_reservation_confirmation_email(form.instance)
+        #send_reservation_confirmation_email_admin(form.instance)
         add_to_ics()
         return response
 
